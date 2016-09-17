@@ -8,4 +8,4 @@ from base import RequestHandler
 class MessageRequestHandler(RequestHandler):
     @gen.coroutine
     def get(self):
-        raise gen.Return({'a':999})
+        self.write('ahhh')
