@@ -5,6 +5,7 @@
 import os
 from common.db import MongoDB
 
+TelegarmApiUrl = "https://api.telegram.org/bot253258803:AAHsAYENENmKkqNDfxTMimhYuKq5lPbu-dc"
 DEBUG = True
 AUTORELOAD = True
 
@@ -13,6 +14,9 @@ Mongo_DB = {
         "host": "127.0.0.1"
     }
 }
+
+
+from .log import *
 
 API_ENV = os.getenv("API_ENV","local")
 

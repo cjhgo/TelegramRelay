@@ -3,7 +3,7 @@
 import sys
 import json
 from tornado.concurrent import Future, TracebackFuture
-from tornado.web import RequestHandler, HTTPError, _has_stream_request_body
+from tornado.web import RequestHandler, HTTPError, _has_stream_request_body, Finish
 from tornado import gen, iostream
 from tornado.gen import coroutine, Return
 from tornado.log import access_log, app_log, gen_log
@@ -91,11 +91,18 @@ class RequestHandler(RequestHandler):
                 self._prepared_future.set_result(None)
 
     def _handle_request_exception(self, e):
+        if isinstance(e, Finish):
+            # Not an error; just finish the request without logging.
+            if not self._finished:
+                self.finish(*e.args)
+            return
+        try:
+            self.log_exception(*sys.exc_info())
+        except Exception:
+            app_log.error("Error in exception logger", exc_info=True)
         if self._finished:
             return
         if isinstance(e, HTTPError):
             self.response(e)
         else:
-            # self.response(ServerError(e))
             self.response(HTTPError(log_message=repr(e)))
-
