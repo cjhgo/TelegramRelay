@@ -2,7 +2,6 @@
 #created by chen @2016/9/17 17:10
 import json
 import logging
-import pycurl
 from tornado import gen
 from tornado.ioloop import IOLoop
 
