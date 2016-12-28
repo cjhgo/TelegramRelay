@@ -9,7 +9,10 @@ from tornado import  gen
 from tornado.ioloop import IOLoop
 from tornado.curl_httpclient import curl_log
 from tornado.httpclient import  HTTPRequest
-from tornado.curl_httpclient import CurlAsyncHTTPClient
+try:
+    from tornado.curl_httpclient import CurlAsyncHTTPClient
+except:
+    from tornado.httpclient import HTTPClient as CurlAsyncHTTPClient
 
 curl_log.setLevel(logging.CRITICAL)
 logging.getLogger().setLevel(logging.DEBUG)
