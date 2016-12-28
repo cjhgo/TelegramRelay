@@ -11,8 +11,7 @@ from tornado.httpclient import  HTTPRequest
 from tornado.web import  HTTPError
 from common.db import MongoDB
 from common.mytornado.client import _CurlAsyncHTTPClient
-from tasks import getupdate
-
+# from tasks import getupdate
 from base import RequestHandler
 # from tornado.web import RequestHandler
 import setting
