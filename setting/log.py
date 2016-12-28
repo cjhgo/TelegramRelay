@@ -14,7 +14,8 @@ LOG["formatters"]={
         "fmt":'%(color)s%(asctime)s %(process)d %(levelname)s%(end_color)s %(message)s',
         "datefmt":None,
         "()":"tornado.log.LogFormatter",
-    },
+    }
+    ,
     "main":{
         "fmt":'%(color)s%(asctime)s %(process)d %(levelname)s%(end_color)s %(message)s',
         "datefmt":None,

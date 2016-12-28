@@ -10,3 +10,8 @@ class Applicaton(Application):
 
     def load(self):
         MongoDB.load()
+
+    def stop(self):
+        self.handlers = []
+        self.named_handlers = {}
+        # self.add_handlers(".*$", self._wait_handler)

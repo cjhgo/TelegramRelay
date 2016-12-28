@@ -5,12 +5,12 @@ import logging
 import pycurl
 from tornado import gen
 from tornado.ioloop import IOLoop
-from tornado.curl_httpclient import CurlAsyncHTTPClient
-from tornado.curl_httpclient import curl_log
-from tornado.web import asynchronous
-from tornado.httpclient import AsyncHTTPClient, HTTPRequest
+
+
+from tornado.httpclient import  HTTPRequest
 from tornado.web import  HTTPError
 from common.db import MongoDB
+from common.mytornado.client import _CurlAsyncHTTPClient
 from tasks import getupdate
 
 from base import RequestHandler
@@ -18,15 +18,7 @@ from base import RequestHandler
 import setting
 
 
-curl_log.setLevel(logging.CRITICAL)
-class _CurlAsyncHTTPClient(CurlAsyncHTTPClient):
-    def _curl_create(self):
-        curl = pycurl.Curl()
-        if curl_log.isEnabledFor(logging.DEBUG):
-            print "run here"
-            curl.setopt(pycurl.VERBOSE, 0)
-            curl.setopt(pycurl.DEBUGFUNCTION, self._curl_debug)
-        return curl
+
 
 class MessageRequestHandler(RequestHandler):
     db = MongoDB()
