@@ -13,7 +13,7 @@ try:
     from tornado.curl_httpclient import curl_log
     curl_log.setLevel(logging.CRITICAL)
 except:
-    from tornado.httpclient import HTTPClient as CurlAsyncHTTPClient
+    from tornado.httpclient import AsyncHTTPClient as CurlAsyncHTTPClient
 
 
 logging.getLogger().setLevel(logging.DEBUG)
@@ -124,11 +124,16 @@ def run(update_id=0):
     url =TelegarmApiUrl + "/getUpdates?timeout=5&offset=" + str(update_id + 1)
 
     http_client = CurlAsyncHTTPClient()
+
     request = HTTPRequest(url, proxy_host='127.0.0.1', proxy_port=8123)
     try:
-        response = yield http_client.fetch(request)
+        try:
+            response = yield http_client.fetch(request)
+        except NotImplementedError as e:
+            request = HTTPRequest(url)
+            response = yield http_client.fetch(request)
     except Exception as e:
-        logging.debug("something is wrong %s", e)
+        logging.debug("something is wrong, %s %s", type(e),e)
         IOLoop.current().add_callback(run, update_id)
     else:
         data = json.loads(response.body)
