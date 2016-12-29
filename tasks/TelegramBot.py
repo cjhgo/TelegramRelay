@@ -25,20 +25,19 @@ db = client.queue
 
 @gen.coroutine
 def handle_keyword(body_list, update_id):
-    text = body_list
-    urls = filter(lambda x: x[:4] == "http", text)
+    body = [item.split('\n') for item in body_list.split('\n\n')]
     yield db.research.insert({
         "type": "keyword",
         "message_id": update_id,
-        "content": text[0],
-        "urls": urls,
+        "content": body[0],
+        "urls": body[1] if len(body) > 1 else [],
         "crts": datetime.datetime.utcnow()
     })
 
 
 @gen.coroutine
 def handle_toreadlink(body_list, update_id):
-    text = body_list
+    text = body_list.split('\n')
     for url in text:
         yield db.toreadlink.insert({
             "message_id": update_id,
@@ -73,12 +72,18 @@ def handle_todo(body_list, update_id):
 
 @gen.coroutine
 def handle_blog(body_list, update_id):
+    items = body_list.split('\n')
+    url = items.pop(0)
+    meta = {}
+    for _ in items:
+        key, value = _.split(': ', 1)
+        meta[key] = value
     yield db.blog.insert({
         "message_id": update_id,
-        "url": body_list[0],
-        "source": body_list[1] if len(body_list) > 1 else "",
-        "about": body_list[2] if len(body_list) > 2 else "",
-        "description": body_list[3] if len(body_list) > 3 else "",
+        "url": url,
+        "source": meta.get("source"),
+        "about": meta.get("about"),
+        "description": meta.get("description"),
         "crts": datetime.datetime.utcnow(),
     })
 
@@ -104,16 +109,19 @@ def handle_message(messages, update_id):
             yield db.TelegramMessage.insert({
                 "message_id": update_id,
                 "crts": datetime.datetime.utcnow(),
-                "content": message["message"]["text"]
+                "content": message["message"]
             })
-            content = message["message"]["text"].split("\n\n")
-            for text in content:
-                text = text.split("\n")
-                message_type = text[0]
-                try:
-                    yield message_handler[message_type](text[1:], update_id)
-                except KeyError as e:
-                    logging.debug("unsupported message type occurs %s", e)
+            content = message["message"].get("text", '').split("\n\n\n\n")  # content:all message
+            links = filter(lambda x: x[:4] == 'http', message["message"].get("text", '').split("\n"))
+            print links
+            for texts in content:   # texts: the same kind of message
+                texts = texts.splitlines(True)
+                message_type = texts.pop(0)[:-1]
+                for text in ''.join(texts).split('\n\n\n'):  # text: one message
+                    try:
+                        yield message_handler[message_type](text, update_id)  #
+                    except KeyError as e:
+                        logging.debug("unsupported message type occurs %s", e)
 
     IOLoop.current().add_callback(run, update_id)
 
@@ -121,8 +129,7 @@ def handle_message(messages, update_id):
 @gen.coroutine
 def run(update_id=0):
     logging.debug(update_id)
-    url =TelegarmApiUrl + "/getUpdates?timeout=5&offset=" + str(update_id + 1)
-
+    url = TelegarmApiUrl + "/getUpdates?timeout=5&offset=" + str(update_id + 1)
     http_client = CurlAsyncHTTPClient()
 
     request = HTTPRequest(url, proxy_host='127.0.0.1', proxy_port=8123)
