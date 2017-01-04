@@ -3,7 +3,7 @@
 
 import os
 
-LOG_PATH=os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))+os.sep+"logs"+os.sep+"api")
+LOG_PATH=os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))+os.sep+"logs"+os.sep+"pda")
 
 LOG={
     "version":1,
