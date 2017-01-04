@@ -102,16 +102,23 @@ def handle_message(messages, update_id):
     if len(data) > 0:
         update_id = data[-1].get("update_id")
         for message in data:
-            flag = yield db.TelegramMessage.find_one({"message_id": update_id})
+            flag = yield db.TelegramMessage.find_one({"update_id": update_id})
             if flag:
                 logging.debug("duplicate message occurs, %s", update_id)
                 break
-            yield db.TelegramMessage.insert({
-                "message_id": update_id,
-                "crts": datetime.datetime.utcnow(),
-                "content": message["message"]
-            })
-            content = message["message"].get("text", '').split("\n\n\n\n")  # content:all message
+            message = message.get("message", message.get("edited_message"))
+            yield db.TelegramMessage.update(
+                {
+                    "message_id": message["message_id"]
+                },
+                {
+                    "update_id": update_id,
+                    "message_id": message["message_id"],
+                    "crts": datetime.datetime.utcnow(),
+                    "content": message
+                },
+                upsert=True)
+            content = message.get("text", '').split("\n\n\n\n")  # content:all message
             links = filter(lambda x: x[:4] == 'http', message["message"].get("text", '').split("\n"))
             print links
             for texts in content:   # texts: the same kind of message
