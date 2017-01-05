@@ -24,17 +24,43 @@ db = client.queue
 
 
 @gen.coroutine
+def handle_update(message_type, message_id):
+    message_type_to_db = {
+        "keyword": "research",
+        "url": "toreadlink",
+        "note": "notes",
+        "todo": "todo",
+        "blog": "blog",
+    }
+
+    collection_name = message_type_to_db[message_type]
+    res = yield db[collection_name].find_one({"message_id": message_id})
+    if res:
+        yield db[collection_name].remove({"message_id": message_id})
+
+
+def get_message_id(message_id):
+    return tuple(map(int, message_id.split(':')))
+
+
+@gen.coroutine
 def handle_keyword(body_list, message_id):
+    message_id, submessage_id = get_message_id(message_id)
+    logging.debug(message_id)
+    logging.debug(submessage_id)
     body = [item.split('\n') for item in body_list.split('\n\n')]
+
     yield db.research.update(
         {
-            "message_id": message_id
+            "message_id": message_id,
+            "submessage_id": submessage_id
         },
         {
             "$set":
             {
                 "type": "keyword",
                 "message_id": message_id,
+                "submessage_id": submessage_id,
                 "content": body[0],
                 "urls": body[1] if len(body) > 1 else [],
                 "crts": datetime.datetime.utcnow()
@@ -46,16 +72,24 @@ def handle_keyword(body_list, message_id):
 
 @gen.coroutine
 def handle_toreadlink(body_list, message_id):
+    message_id, submessage_id = get_message_id(message_id)
+    logging.debug(message_id)
+    logging.debug(submessage_id)
+
     text = body_list.split('\n')
-    for url in text:
+    for i, url in enumerate(text):
         yield db.toreadlink.update(
             {
-                "message_id": message_id
+                "message_id": message_id,
+                "submessage_id": submessage_id,
+                "link_id": i,
             },
             {
                 "$set":
                 {
                     "message_id": message_id,
+                    "submessage_id": submessage_id,
+                    "link_id": i,
                     "type": "url",
                     "link": url,
                     "crts": datetime.datetime.utcnow()
@@ -66,6 +100,10 @@ def handle_toreadlink(body_list, message_id):
 
 @gen.coroutine
 def handle_note(body_list, message_id):
+    message_id, submessage_id = get_message_id(message_id)
+    logging.debug(message_id)
+    logging.debug(submessage_id)
+
     yield db.notes.update(
             {
                 "message_id": message_id
@@ -84,15 +122,23 @@ def handle_note(body_list, message_id):
 
 @gen.coroutine
 def handle_todo(body_list, message_id):
-    for _ in body_list:
+    message_id, submessage_id = get_message_id(message_id)
+    logging.debug(message_id)
+    logging.debug(submessage_id)
+
+    for i, _ in enumerate(body_list):
         yield db.todo.update(
             {
-                "message_id": message_id
+                "message_id": message_id,
+                "submessage_id": submessage_id,
+                "task_id": i,
             },
             {
                 "$set":
                     {
                         "message_id": message_id,
+                        "submessage_id": submessage_id,
+                        "task_id": i,
                         "type": "todo",
                         "task": _,
                         "crts": datetime.datetime.utcnow()
@@ -103,6 +149,10 @@ def handle_todo(body_list, message_id):
 
 @gen.coroutine
 def handle_blog(body_list, message_id):
+    message_id, submessage_id = get_message_id(message_id)
+    logging.debug(message_id)
+    logging.debug(submessage_id)
+
     items = body_list.split('\n')
     url = items.pop(0)
     meta = {}
@@ -111,11 +161,14 @@ def handle_blog(body_list, message_id):
         meta[key] = value
     yield db.blog.update(
         {
-            "message_id": message_id
+            "message_id": message_id,
+            "submessage_id": submessage_id,
         },
         {
             "$set":
                 {
+                    "message_id": message_id,
+                    "submessage_id": submessage_id,
                     "url": url,
                     "source": meta.get("source"),
                     "about": meta.get("about"),
@@ -139,7 +192,7 @@ def handle_message(messages, update_id):
     logging.debug("receive message %s", messages)
     data = messages["result"]
     if len(data) > 0:
-        for message in data:
+        for i, message in enumerate(data):
             update_id = message.pop("update_id")
             flag = yield db.TelegramMessage.find_one({"update_id": update_id})
             if flag:
@@ -162,14 +215,18 @@ def handle_message(messages, update_id):
             content = message.get("text", '').split("\n\n\n\n")  # content:all message
             links = filter(lambda x: x[:4] == 'http', message.get("text", '').split("\n"))
             print '\n'.join(links)
+            submessage_index = 0
             for texts in content:   # texts: the same kind of message
                 texts = texts.splitlines(True)
                 message_type = texts.pop(0)[:-1]
+                yield handle_update(message_type=message_type, message_id=message_id)
                 for text in ''.join(texts).split('\n\n\n'):  # text: one message
+                    temp_message_id = ':'.join(map(str, [message_id, submessage_index]))
                     try:
-                        yield message_handler[message_type](text, message_id)  #
+                        yield message_handler[message_type](text, temp_message_id)  #
                     except KeyError as e:
                         logging.debug("unsupported message type occurs %s", e)
+                    submessage_index += 1
 
     IOLoop.current().add_callback(run, update_id)
 
