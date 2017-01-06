@@ -11,39 +11,32 @@ from base import RequestHandler
 import setting
 
 
-
-
-class MessageRequestHandler(RequestHandler):
+class ResourceRequestHandler(RequestHandler):
     db = MongoDB()
+    collection_name = ''
 
     @gen.coroutine
-    def getupdate(self, update_id):
-        url = setting.TelegarmApiUrl
-        url += "/getUpdates?timeout=5&offset=" + str(update_id + 1)
+    def get(self):
+        cursor = self.db.queue[self.collection_name].find({}, {"_id": 0, "message_id": 0, "submessage_id": 0})
+        res = yield cursor.to_list(None)
+        raise gen.Return(res)
 
 
-        http_client = _CurlAsyncHTTPClient()
-        request = HTTPRequest(url, proxy_host='127.0.0.1', proxy_port=8123)
-        import logging
-        try:
-            response = yield http_client.fetch(request)
-        except Exception as e:
-            print 'here', e
-            IOLoop.current().add_callback(getupdate, update_id)
-        else:
-            data = json.loads(response.body)
+class BlogRequestHandler(ResourceRequestHandler):
+    collection_name = 'blog'
 
-            if len(data["result"]) > 0:
-                try:
-                    update_id = data["result"][-1].get("update_id")
-                    print 'hehe', data["result"]
-                except:
-                    pass
-        finally:
-            print 'wrong!'
-            IOLoop.current().add_callback(getupdate, update_id)
 
-    @gen.coroutine
-    def get(self, update_id=77583600):
-        logging.debug("oh run")
-        yield self.getupdate(update_id)
+class ToReadLinkRequestHandler(ResourceRequestHandler):
+    collection_name = 'toreadlink'
+
+
+class KeywordRequestHandler(ResourceRequestHandler):
+    collection_name = 'research'
+
+
+class ToDoRequestHandler(ResourceRequestHandler):
+    collection_name = 'todo'
+
+
+class NotesRequestHandler(ResourceRequestHandler):
+    collection_name = 'notes'
