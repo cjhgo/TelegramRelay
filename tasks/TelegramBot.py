@@ -113,7 +113,7 @@ def handle_note(body_list, message_id):
                 {
                     "message_id": message_id,
                     "type": "note",
-                    "content": "\n".join(body_list),
+                    "content": body_list.split('\n'),
                     "crts": datetime.datetime.utcnow()
                 }
             },
@@ -159,22 +159,17 @@ def handle_blog(body_list, message_id):
     for _ in items:
         key, value = _.split(': ', 1)
         meta[key] = value
+    meta["message_id"] = message_id
+    meta["submessage_id"] = submessage_id
+    meta["url"] = url
+    meta["crts"] = datetime.datetime.utcnow()
     yield db.blog.update(
         {
             "message_id": message_id,
             "submessage_id": submessage_id,
         },
         {
-            "$set":
-                {
-                    "message_id": message_id,
-                    "submessage_id": submessage_id,
-                    "url": url,
-                    "source": meta.get("source"),
-                    "about": meta.get("about"),
-                    "description": meta.get("description"),
-                    "crts": datetime.datetime.utcnow(),
-                }
+            "$set": meta
         },
         upsert=True)
 
@@ -245,7 +240,7 @@ def run(update_id=0):
             request = HTTPRequest(url)
             response = yield http_client.fetch(request)
     except Exception as e:
-        logging.debug("something is wrong, %s %s", type(e),e)
+        logging.debug("something is wrong, %s %s", type(e), e)
         IOLoop.current().add_callback(run, update_id)
     else:
         data = json.loads(response.body)
