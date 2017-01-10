@@ -18,7 +18,7 @@ class ResourceRequestHandler(RequestHandler):
     @gen.coroutine
     def get(self):
         cursor = self.db.queue[self.collection_name].find({}, {"_id": 0, "message_id": 0, "submessage_id": 0})
-        res = yield cursor.to_list(None)
+        res = yield cursor.sort("crts", -1).to_list(None)
         raise gen.Return(res)
 
 
