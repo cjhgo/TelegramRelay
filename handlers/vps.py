@@ -6,10 +6,10 @@ from tornado import gen
 from tornado.httpclient import HTTPRequest
 from tornado.web import HTTPError
 from common.mytornado.client import CurlAsyncHTTPClient as AsyncHTTPClient
-from base import RequestHandler
+from base import RequestHandler, authenticated
 
 class VpsRequestHandler(RequestHandler):
-
+    @authenticated
     @gen.coroutine
     def get(self):
         url = "https://api.64clouds.com/v1/resetRootPassword?veid=277112&api_key=private_gThkVoctF4ZCQRuIPP8d7JxX"

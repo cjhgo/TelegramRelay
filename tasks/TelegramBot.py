@@ -16,7 +16,6 @@ logging.getLogger().setLevel(logging.DEBUG)
 TelegarmApiUrl = "https://api.telegram.org/bot" + botkey
 client = motor.MotorClient(max_pool_size=128, tz_aware=True, host="127.0.0.1", port=27017)
 
-print botkey
 db = client[message_collectionname]
 
 

@@ -2,6 +2,7 @@
 #created by chen @2016/9/17 17:11
 import sys
 import json
+import functools
 from tornado.concurrent import Future, TracebackFuture
 from tornado.web import RequestHandler, HTTPError, _has_stream_request_body, Finish
 from tornado import gen, iostream
@@ -9,10 +10,14 @@ from tornado.gen import coroutine, Return
 from tornado.log import access_log, app_log, gen_log
 
 class ApiHTTPError(HTTPError):
-    def __init__(self, status_code, log_message, data = {}, *args, **kwargs):
+    def __init__(self, status_code, log_message, data={}, *args, **kwargs):
         super(ApiHTTPError,self).__init__(status_code, log_message, *args, **kwargs)
 
         self.data = data
+
+class ForbiddenError(ApiHTTPError):
+    def __init__(self, log_message, status_code=300, data={},  *args, **kwargs):
+        super(ForbiddenError, self).__init__(status_code, log_message, data, *args, **kwargs)
 
 
 class ServerError(ApiHTTPError):
@@ -22,11 +27,20 @@ class ServerError(ApiHTTPError):
         super(ServerError, self).__init__(status_code, log_message, *args, **kwargs)
 
 
+def authenticated(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if not self.current_user:
+            raise HTTPError(403, log_message=u"用户未登录")
+        return method(self, *args, **kwargs)
+    return wrapper
+
+
 class RequestHandler(RequestHandler):
     def response(self, result):
         result = {
             "status": 0 if not isinstance(result, HTTPError) else result.status_code,
-            "msg": '' if not isinstance(result, HTTPError) else result.log_message or 'Unknown',
+            "msg": '' if not isinstance(result, HTTPError) else str(result),
             "data": result if not isinstance(result, HTTPError) else {},
         }
         data = json.dumps(result, default=str, ensure_ascii=False).encode("utf-8")
@@ -89,6 +103,12 @@ class RequestHandler(RequestHandler):
                 # now (to unblock the HTTP server).  Note that this is not
                 # in a finally block to avoid GC issues prior to Python 3.4.
                 self._prepared_future.set_result(None)
+
+    def get_current_user(self):
+        acookie = self.get_secure_cookie("acookie")
+        if not acookie:
+            return None
+        return acookie
 
     def _handle_request_exception(self, e):
         if isinstance(e, Finish):

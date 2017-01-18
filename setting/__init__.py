@@ -16,9 +16,11 @@ Mongo_DB = {
 }
 
 
+cookie_secret="__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__"
+
 from .log import *
 
-API_ENV = os.getenv("API_ENV","local")
+API_ENV = os.getenv("API_ENV", "local")
 
 
 if API_ENV == "local":
