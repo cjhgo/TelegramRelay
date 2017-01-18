@@ -38,9 +38,15 @@ def authenticated(method):
 
 class RequestHandler(RequestHandler):
     def response(self, result):
+        if not isinstance(result, HTTPError):
+            msg = ''
+        elif not result.log_message:
+            msg = str(result)
+        else:
+            msg = result.log_message
         result = {
             "status": 0 if not isinstance(result, HTTPError) else result.status_code,
-            "msg": '' if not isinstance(result, HTTPError) else str(result),
+            "msg": msg,
             "data": result if not isinstance(result, HTTPError) else {},
         }
         data = json.dumps(result, default=str, ensure_ascii=False).encode("utf-8")
