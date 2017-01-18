@@ -5,7 +5,7 @@ import json
 from tornado import gen
 from tornado.httpclient import HTTPRequest
 from tornado.web import HTTPError
-from common.mytornado.client import _CurlAsyncHTTPClient as AsyncHTTPClient
+from common.mytornado.client import CurlAsyncHTTPClient as AsyncHTTPClient
 from base import RequestHandler
 
 class VpsRequestHandler(RequestHandler):

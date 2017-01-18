@@ -7,20 +7,17 @@ import logging
 import motor
 from tornado import  gen
 from tornado.ioloop import IOLoop
-from tornado.httpclient import  HTTPRequest
-try:
-    from tornado.curl_httpclient import CurlAsyncHTTPClient
-    from tornado.curl_httpclient import curl_log
-    curl_log.setLevel(logging.CRITICAL)
-except:
-    from tornado.httpclient import AsyncHTTPClient as CurlAsyncHTTPClient
+from tornado.httpclient import HTTPRequest
+from common.mytornado.client import CurlAsyncHTTPClient
+from setting import message_collectionname, botkey
 
 
 logging.getLogger().setLevel(logging.DEBUG)
-TelegarmApiUrl = "https://api.telegram.org/bot253258803:AAHsAYENENmKkqNDfxTMimhYuKq5lPbu-dc"
+TelegarmApiUrl = "https://api.telegram.org/bot" + botkey
 client = motor.MotorClient(max_pool_size=128, tz_aware=True, host="127.0.0.1", port=27017)
-db = client.test
-db = client.queue
+
+print botkey
+db = client[message_collectionname]
 
 
 @gen.coroutine
