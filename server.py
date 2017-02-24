@@ -5,7 +5,7 @@
 from tornado.ioloop import IOLoop
 from tornado.httpserver import HTTPServer
 import setting
-from tasks.TelegramBot import run
+from tasks.TelegramBot import run, fetch_title
 from application import Applicaton
 from urls import urls
 
@@ -22,6 +22,7 @@ def start():
     server.start()
     ioloop = IOLoop.instance()
     ioloop.add_callback(run)
+    ioloop.add_callback(fetch_title)
     ioloop.add_callback(application.start)
     ioloop.start()
 

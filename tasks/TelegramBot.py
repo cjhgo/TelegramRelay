@@ -1,14 +1,16 @@
 #coding: utf-8
 #created at 16-12-27 15:02
 
+from functools import partial
 import json
 import datetime
 import logging
 import motor
-from tornado import  gen
+from tornado import  gen, queues
 from tornado.ioloop import IOLoop
 from tornado.httpclient import HTTPRequest
 from common.mytornado.client import CurlAsyncHTTPClient
+from get_title import run as fetch_title
 from setting import message_collectionname, botkey
 
 
@@ -17,7 +19,8 @@ TelegarmApiUrl = "https://api.telegram.org/bot" + botkey
 client = motor.MotorClient(max_pool_size=128, tz_aware=True, host="127.0.0.1", port=27017)
 
 db = client[message_collectionname]
-
+url_queue = queues.Queue()
+fetch_title = partial(fetch_title, url_queue)
 
 @gen.coroutine
 def handle_update(message_type, message_id):
@@ -182,6 +185,16 @@ message_handler = {
 
 
 @gen.coroutine
+def put_url(message):
+    text = message["text"]
+    for item in message.get("entities",[]):
+        if item["type"] == "url":
+            begin = item["offset"]
+            end = begin + item["length"]
+            url_queue.put(text[begin:end])
+
+
+@gen.coroutine
 def handle_message(messages, update_id):
     logging.debug("receive message %s", messages)
     data = messages["result"]
@@ -194,6 +207,7 @@ def handle_message(messages, update_id):
                 break
 
             message = message.get("message", message.get("edited_message"))
+            yield put_url(message)
             message_id = message.pop("message_id")
             yield db.TelegramMessage.update(
                 {
@@ -208,7 +222,7 @@ def handle_message(messages, update_id):
                 upsert=True)
             content = message.get("text", '').split("\n\n\n\n")  # content:all message
             links = filter(lambda x: x[:4] == 'http', message.get("text", '').split("\n"))
-            print '\n'.join(links)
+            #print '\n'.join(links)
             submessage_index = 0
             for texts in content:   # texts: the same kind of message
                 texts = texts.splitlines(True)
@@ -244,6 +258,12 @@ def run(update_id=0):
     else:
         data = json.loads(response.body)
         yield handle_message(data, update_id)
+
+# todo handle image file
+# get path by file id
+# https://api.telegram.org/bot253258803:AAHsAYENENmKkqNDfxTMimhYuKq5lPbu-dc/getFile?file_id=AgADBQADKKgxG6A6bQsckUfAJfPJyXwewTIABBW9lEOwuGIRXSMCAAEC
+# get real file
+# https://api.telegram.org/file/bot253258803:AAHsAYENENmKkqNDfxTMimhYuKq5lPbu-dc/photo/file_1.jpg
 
 
 if __name__ == "__main__":
