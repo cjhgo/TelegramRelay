@@ -3,7 +3,7 @@
 
 import setting
 from tornado.web import Application as TApplicaton
-from common.db import MongoDB
+from common.db import MongoDB, RedisDB
 
 
 class Applicaton(TApplicaton):
@@ -18,6 +18,7 @@ class Applicaton(TApplicaton):
 
     def load(self):
         MongoDB.load()
+        RedisDB.load()
 
     def stop(self):
         self.handlers = []

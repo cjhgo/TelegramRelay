@@ -2,7 +2,8 @@
 #created by chen @2016/9/19 1:48 
 
 import motor
-
+import tornadis
+from tornado import gen
 
 class MongoDB(object):
     _cofing = {}
@@ -28,3 +29,46 @@ class MongoDB(object):
         setattr(self, item, db)
         return db
 
+
+class RedisDB(object):
+    _config = {}
+    _client = None
+
+    @classmethod
+    def config(cls, config):
+        cls._config = config
+
+    @classmethod
+    def load(cls):
+        cls._client = tornadis.Client(host=cls._config["host"])
+
+    def __init__(self, db_name, prefix=None):
+        self.db_name = "%s:%s" % (prefix or self._config["prefix"], db_name)
+
+    @gen.coroutine
+    def mget(self, *keys):
+        keys = ["%s:%s" % (self.db_name, key) for key in keys]
+        res = yield self._client.call("MGET", *keys)
+        raise gen.Return(res)
+
+    @gen.coroutine
+    def set(self, key, value):
+        key = "%s:%s"%(self.db_name, key)
+        yield self._client.call("SET", key, value)
+
+if __name__ == "__main__":
+    from tornado import ioloop
+    from tornadis import Client
+    io_loop = ioloop.IOLoop.current()
+    from setting import CACHE
+    RedisDB.config(CACHE)
+    RedisDB.load()
+    cache = RedisDB("test")
+
+    @gen.coroutine
+    def run():
+        client = Client()
+        res = yield client.call("SET", "wwww", 1233)
+        res = yield cache.set("wwww", 1233)
+        print res
+    io_loop.run_sync(run)

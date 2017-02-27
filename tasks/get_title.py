@@ -47,18 +47,22 @@ def get_title(url):
     except Exception as e:
         logging.debug("something is wrong, %s %s", type(e), e)
         raise gen.Return('')
-    doc = BeautifulSoup(response.body, 'lxml')
-    title = doc.title.string
+    try:
+        doc = BeautifulSoup(response.body, 'lxml')
+        title = doc.title.string
+    except AttributeError as e:
+        title = "untitle"
     raise gen.Return(title)
 
 
 @gen.coroutine
-def run(url_queue):
+def run(url_queue, cache):
     while True:
         item = yield url_queue.get()
         try:
             #print('Doing work on %s' % item)
             title = yield get_title(item)
+            yield cache.set(item, title)
             logging.debug("gettitle: %s : %s", item, title)
         finally:
             url_queue.task_done()
