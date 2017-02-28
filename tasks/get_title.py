@@ -4,6 +4,7 @@
 
 #https://github.com/tornadoweb/tornado/blob/master/demos/webspider/webspider.py
 
+import urlparse
 import logging
 import random
 import time
@@ -36,23 +37,24 @@ def get_title(url):
 
     http_client = CurlAsyncHTTPClient()
 
-    request = HTTPRequest(url,headers={'User-Agent': random.choice(USER_AGENTS)},
+    request = HTTPRequest(url, validate_cert=False, headers={'User-Agent': random.choice(USER_AGENTS)},
                           proxy_host='127.0.0.1', proxy_port=8123)
     try:
         try:
             response = yield http_client.fetch(request)
         except NotImplementedError as e:
-            request = HTTPRequest(url,headers={'User-Agent': random.choice(USER_AGENTS)})
+            request = HTTPRequest(url, validate_cert=False, headers={'User-Agent': random.choice(USER_AGENTS)})
             response = yield http_client.fetch(request)
     except Exception as e:
         logging.debug("something is wrong, %s %s", type(e), e)
-        raise gen.Return('')
-    try:
-        doc = BeautifulSoup(response.body, 'lxml')
-        title = doc.title.string
-    except AttributeError as e:
         title = None
-    raise gen.Return(title or "untitle")
+    else:
+        try:
+            doc = BeautifulSoup(response.body, 'lxml')
+            title = doc.title.string
+        except AttributeError as e:
+            title = None
+    raise gen.Return(title or urlparse.urlparse(url).path or url)
 
 
 @gen.coroutine
