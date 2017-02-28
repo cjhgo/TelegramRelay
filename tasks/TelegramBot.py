@@ -10,6 +10,7 @@ from tornado import  gen, queues
 from tornado.ioloop import IOLoop
 from tornado.httpclient import HTTPRequest
 from common.mytornado.client import CurlAsyncHTTPClient
+from common.db import MongoDB, RedisDB
 from get_title import run as fetch_title
 from setting import message_collectionname, botkey
 
@@ -19,8 +20,10 @@ TelegarmApiUrl = "https://api.telegram.org/bot" + botkey
 client = motor.MotorClient(max_pool_size=128, tz_aware=True, host="127.0.0.1", port=27017)
 
 db = client[message_collectionname]
+cache = RedisDB("url")
 url_queue = queues.Queue()
-fetch_title = partial(fetch_title, url_queue)
+fetch_title = partial(fetch_title, url_queue, cache)
+
 
 @gen.coroutine
 def handle_update(message_type, message_id):
@@ -191,7 +194,7 @@ def put_url(message):
         if item["type"] == "url":
             begin = item["offset"]
             end = begin + item["length"]
-            url_queue.put(text[begin:end])
+            yield url_queue.put(text[begin:end])
 
 
 @gen.coroutine

@@ -49,7 +49,7 @@ class RequestHandler(RequestHandler):
             "msg": msg,
             "data": result if not isinstance(result, HTTPError) else {},
         }
-        data = json.dumps(result, default=str, ensure_ascii=False).encode("utf-8")
+        data = json.dumps(result, default=str, ensure_ascii=False).decode("utf-8")
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.api_status = result["status"]
         self.api_msg = result["msg"]

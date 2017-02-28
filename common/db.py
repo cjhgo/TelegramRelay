@@ -29,6 +29,8 @@ class MongoDB(object):
         setattr(self, item, db)
         return db
 
+    def __getitem__(self, item):
+        return self.__getattr__(item)
 
 class RedisDB(object):
     _config = {}
@@ -41,6 +43,8 @@ class RedisDB(object):
     @classmethod
     def load(cls):
         cls._client = tornadis.Client(host=cls._config["host"])
+        # if not cls._client.is_connected():
+        #     raise Exception("can not connect")
 
     def __init__(self, db_name, prefix=None):
         self.db_name = "%s:%s" % (prefix or self._config["prefix"], db_name)

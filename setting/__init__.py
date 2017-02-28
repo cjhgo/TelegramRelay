@@ -3,18 +3,22 @@
 
 
 import os
-from common.db import MongoDB
+from common.db import MongoDB, RedisDB
 
 # TelegarmApiUrl = "https://api.telegram.org/bot253258803:AAHsAYENENmKkqNDfxTMimhYuKq5lPbu-dc"
 DEBUG = True
 AUTORELOAD = True
 
-Mongo_DB = {
+Mongo_DATABASE = {
     "default": {
         "host": "127.0.0.1"
     }
 }
 
+CACHE = {
+    "host": "127.0.0.1",
+    "prefix": "api"
+}
 
 cookie_secret="__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__"
 
@@ -29,4 +33,5 @@ elif API_ENV == "production":
     from production import *
 
 
-MongoDB.config(Mongo_DB)
+MongoDB.config(Mongo_DATABASE)
+RedisDB.config(CACHE)

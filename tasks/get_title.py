@@ -51,8 +51,8 @@ def get_title(url):
         doc = BeautifulSoup(response.body, 'lxml')
         title = doc.title.string
     except AttributeError as e:
-        title = "untitle"
-    raise gen.Return(title)
+        title = None
+    raise gen.Return(title or "untitle")
 
 
 @gen.coroutine
@@ -70,4 +70,7 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig()
     io_loop = ioloop.IOLoop.current()
-    io_loop.run_sync(run)
+    test_url = "http://mp.weixin.qq.com/s?__biz=MzI4NjYwMjcxOQ=="
+    from functools import partial
+    get_title = partial(get_title, test_url)
+    io_loop.run_sync(get_title)
