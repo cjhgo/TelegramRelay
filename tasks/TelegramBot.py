@@ -35,11 +35,10 @@ def handle_update(message_type, message_id):
         "blog": "blog",
     }
 
-    # collection_name = message_type_to_db[message_type]
-    for type, collection_name in message_type_to_db.items():
-        res = yield db[collection_name].find_one({"message_id": message_id})
-        if res:
-            yield db[collection_name].remove({"message_id": message_id})
+    collection_name = message_type_to_db[message_type]
+    res = yield db[collection_name].find_one({"message_id": message_id})
+    if res:
+        yield db[collection_name].remove({"message_id": message_id})
 
 
 def get_message_id(message_id):
