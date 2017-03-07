@@ -11,6 +11,9 @@ from tornado.ioloop import IOLoop
 from tornado.httpclient import HTTPRequest
 from common.mytornado.client import CurlAsyncHTTPClient
 from common.db import MongoDB, RedisDB
+#thoung this is an unused import
+#only when you import this module does the service_register decorator will execute
+#then the services dict of Service will be populated
 import services
 from service import Service
 
@@ -26,167 +29,6 @@ db = client[message_collectionname]
 cache = RedisDB("url")
 url_queue = queues.Queue()
 fetch_title = partial(fetch_title, url_queue, cache)
-
-
-@gen.coroutine
-def handle_update(message_type, message_id):
-    message_type_to_db = {
-        "keyword": "research",
-        "url": "toreadlink",
-        "note": "notes",
-        "todo": "todo",
-        "blog": "blog",
-    }
-
-    collection_name = message_type_to_db[message_type]
-    res = yield db[collection_name].find_one({"message_id": message_id})
-    if res:
-        yield db[collection_name].remove({"message_id": message_id})
-
-
-def get_message_id(message_id):
-    return tuple(map(int, message_id.split(':')))
-
-
-@gen.coroutine
-def handle_keyword(body_list, message_id):
-    message_id, submessage_id = get_message_id(message_id)
-    logging.debug(message_id)
-    logging.debug(submessage_id)
-    body = [item.split('\n') for item in body_list.split('\n\n')]
-
-    yield db.research.update(
-        {
-            "message_id": message_id,
-            "submessage_id": submessage_id
-        },
-        {
-            "$set":
-            {
-                "type": "keyword",
-                "message_id": message_id,
-                "submessage_id": submessage_id,
-                "content": body[0],
-                "urls": body[1] if len(body) > 1 else [],
-                "crts": datetime.datetime.utcnow()
-            }
-
-        },
-        upsert=True)
-
-
-@gen.coroutine
-def handle_toreadlink(body_list, message_id):
-    message_id, submessage_id = get_message_id(message_id)
-    logging.debug(message_id)
-    logging.debug(submessage_id)
-
-    text = body_list.split('\n')
-    for i, url in enumerate(text):
-        yield db.toreadlink.update(
-            {
-                "message_id": message_id,
-                "submessage_id": submessage_id,
-                "link_id": i,
-            },
-            {
-                "$set":
-                {
-                    "message_id": message_id,
-                    "submessage_id": submessage_id,
-                    "link_id": i,
-                    "type": "url",
-                    "link": url,
-                    "crts": datetime.datetime.utcnow()
-                }
-            },
-            upsert=True)
-
-
-@gen.coroutine
-def handle_note(body_list, message_id):
-    message_id, submessage_id = get_message_id(message_id)
-    logging.debug(message_id)
-    logging.debug(submessage_id)
-
-    yield db.notes.update(
-            {
-                "message_id": message_id
-            },
-            {
-                "$set":
-                {
-                    "message_id": message_id,
-                    "type": "note",
-                    "content": body_list.split('\n'),
-                    "crts": datetime.datetime.utcnow()
-                }
-            },
-            upsert=True)
-
-
-@gen.coroutine
-def handle_todo(body_list, message_id):
-    message_id, submessage_id = get_message_id(message_id)
-    logging.debug(message_id)
-    logging.debug(submessage_id)
-
-    body_list = body_list.split('\n')
-
-    for i, _ in enumerate(body_list):
-        meta = {}
-        key, value = _.split(': ', 1)
-        meta["task"] = value
-        meta["type"] = key
-        meta["message_id"] = message_id
-        meta["submessage_id"] = submessage_id
-        meta["task_id"] = i
-        meta["crts"] = datetime.datetime.utcnow()
-        yield db.todo.update(
-            {
-                "message_id": message_id,
-                "submessage_id": submessage_id,
-                "task_id": i
-            },
-            {
-                "$set": meta
-            },
-            upsert=True)
-
-
-@gen.coroutine
-def handle_blog(body_list, message_id):
-    message_id, submessage_id = get_message_id(message_id)
-    logging.debug(message_id)
-    logging.debug(submessage_id)
-
-    items = body_list.split('\n')
-    url = items.pop(0)
-    meta = {}
-    for _ in items:
-        key, value = _.split(': ', 1)
-        meta[key] = value
-    meta["message_id"] = message_id
-    meta["submessage_id"] = submessage_id
-    meta["url"] = url
-    meta["crts"] = datetime.datetime.utcnow()
-    yield db.blog.update(
-        {
-            "message_id": message_id,
-            "submessage_id": submessage_id,
-        },
-        {
-            "$set": meta
-        },
-        upsert=True)
-
-message_handler = {
-    "keyword": handle_keyword,
-    "url": handle_toreadlink,
-    "note": handle_note,
-    "todo": handle_todo,
-    "blog": handle_blog,
-}
 
 
 @gen.coroutine
@@ -232,12 +74,11 @@ def handle_message(messages, update_id):
             for texts in content:   # texts: the same kind of message
                 texts = texts.splitlines(True)
                 message_type = texts.pop(0)[:-1]
-                yield handle_update(message_type=message_type, message_id=message_id)
+                service = Service.get_service(message_type)
+                yield service.handle_update(message_id)
                 for text in ''.join(texts).split('\n\n\n'):  # text: one message
                     temp_message_id = ':'.join(map(str, [message_id, submessage_index]))
                     try:
-                        #yield message_handler[message_type](text, temp_message_id)  #
-                        service = Service.get_service(message_type)
                         yield service.handler(text, temp_message_id)
                     except KeyError as e:
                         logging.debug("unsupported message type occurs %s", e)

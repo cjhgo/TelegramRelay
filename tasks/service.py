@@ -22,6 +22,12 @@ class Service(object):
         return tuple(map(int, message_id.split(':')))
 
     @gen.coroutine
+    def handle_update(self, message_id):
+        res = yield self.db[self.db_name][self.collection_name].find_one({"message_id": message_id})
+        if res:
+            yield self.db[self.db_name][self.collection_name].remove({"message_id": message_id})
+
+    @gen.coroutine
     def handler(self, *args, **kwargs):
         raise NotImplementedError
 
