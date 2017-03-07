@@ -63,7 +63,7 @@ class TitleRequestHandler(RequestHandler):
 
         res = yield cache.mget(*urls)
         if isinstance(res, TornadisException):
-            raise HTTPError(status_code=500, log_message="wrong")
+            raise HTTPError(status_code=500, log_message=str(res))
         for i, item in enumerate(res):
             if item is None:
                 yield url_queue.put(urls[i])

@@ -18,11 +18,8 @@ except ImportError:
     from urllib.parse import urljoin, urldefrag
 
 from tornado.httpclient import HTTPRequest
-from tornado import httpclient, gen, ioloop, queues
+from tornado import httpclient, gen, ioloop
 from common.mytornado.client import CurlAsyncHTTPClient
-
-
-
 
 
 @gen.coroutine
@@ -54,7 +51,8 @@ def get_title(url):
             title = doc.title.string
         except AttributeError as e:
             title = None
-    raise gen.Return(title or urlparse.urlparse(url).path or url)
+    path, query = urlparse.urlparse(url).path, urlparse.urlparse(url).query
+    raise gen.Return(title or (path if path != '/' else query) or url)
 
 
 @gen.coroutine
@@ -62,7 +60,6 @@ def run(url_queue, cache):
     while True:
         item = yield url_queue.get()
         try:
-            #print('Doing work on %s' % item)
             title = yield get_title(item)
             yield cache.set(item, title)
             logging.debug("gettitle: %s : %s", item, title)
