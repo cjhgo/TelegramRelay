@@ -32,6 +32,8 @@ class BlogRequestHandler(ResourceRequestHandler):
 class ToReadLinkRequestHandler(ResourceRequestHandler):
     collection_name = 'toreadlink'
 
+class TempLinkRequestHandler(ResourceRequestHandler):
+    collection_name = 'templink'
 
 class KeywordRequestHandler(ResourceRequestHandler):
     collection_name = 'research'
