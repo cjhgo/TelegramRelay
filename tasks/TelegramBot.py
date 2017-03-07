@@ -11,6 +11,9 @@ from tornado.ioloop import IOLoop
 from tornado.httpclient import HTTPRequest
 from common.mytornado.client import CurlAsyncHTTPClient
 from common.db import MongoDB, RedisDB
+import services
+from service import Service
+
 from get_title import run as fetch_title
 from setting import message_collectionname, botkey
 
@@ -233,7 +236,9 @@ def handle_message(messages, update_id):
                 for text in ''.join(texts).split('\n\n\n'):  # text: one message
                     temp_message_id = ':'.join(map(str, [message_id, submessage_index]))
                     try:
-                        yield message_handler[message_type](text, temp_message_id)  #
+                        #yield message_handler[message_type](text, temp_message_id)  #
+                        service = Service.get_service(message_type)
+                        yield service.handler(text, temp_message_id)
                     except KeyError as e:
                         logging.debug("unsupported message type occurs %s", e)
                     submessage_index += 1

@@ -1,0 +1,7 @@
+#coding: utf-8
+#created at 17-3-7 16:51
+
+message = "keyword\nTimsort algorithm\ntimsort 算法\n\nhttp://bindog.github.io/blog/2015/03/30/use-formal-method-to-find-the-bug-in-timsort-and-lunar-rover\nhttps://svn.python.org/projects/python/trunk/Objects/listsort.txt\n\n\npython design pattern\n\nhttp://www.aleax.it/gdd_pydp.pdf\nhttp://pyvideo.org/europython-2011/python-design-patterns.html\n\n\n\nurl\nhttps://www.python.org/doc/humor/#the-origin-of-the-great-timbot-conspiracy-theory\nhttp://zhuoqiang.me/bring-cpp-class-to-python-through-cython.html\nhttp://zhuoqiang.me/ungelivable-cpp-those-who-cannot-inherit.html\nhttp://zhuoqiang.me/python-urllib2-usage.html\nhttps://www.zhihu.com/question/23660692\nhttps://www.sitepoint.com/top-javascript-frameworks-libraries-tools-use/\nhttps://segmentfault.com/a/1190000008388837\nhttps://www.v2ex.com/t/341982#reply10\nhttp://cctv.cntv.cn/lm/dajia/video/\nhttp://blog.sciencenet.cn/blog-330732-656659.html\nhttp://zcam.tsinghua.edu.cn/wtsun/news.files/2016.12.24_CCLin_Biography.pdf\nhttps://www.quora.com/Why-do-people-never-get-rich-by-working-as-an-employee\nhttp://www.weixindou.com/p/14KH33LWZ9.html\nhttps://www.youtube.com/watch?v=1gp6qooTbkA\nhttp://neopythonic.blogspot.hk/2009/04/tail-recursion-elimination.html\nhttps://en.wikipedia.org/wiki/String_interning"
+texts = message.splitlines()
+for line in texts:
+    print line if line != '\n' else '\\n'
