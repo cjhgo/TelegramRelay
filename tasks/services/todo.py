@@ -29,7 +29,7 @@ class TodoService(Service):
             meta["submessage_id"] = submessage_id
             meta["task_id"] = i
             meta["crts"] = datetime.datetime.utcnow()
-            yield self.db[self.collection_name].update(
+            yield self.db[self.db_name][self.collection_name].update(
                 {
                     "message_id": message_id,
                     "submessage_id": submessage_id,

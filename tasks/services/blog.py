@@ -27,7 +27,7 @@ class BlogService(Service):
         meta["submessage_id"] = submessage_id
         meta["url"] = url
         meta["crts"] = datetime.datetime.utcnow()
-        yield self.db[self.collection_name].update(
+        yield self.db[self.db_name][self.collection_name].update(
             {
                 "message_id": message_id,
                 "submessage_id": submessage_id,

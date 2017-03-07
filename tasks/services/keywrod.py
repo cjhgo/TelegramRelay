@@ -19,7 +19,7 @@ class KeywordService(Service):
         logging.debug(submessage_id)
         body = [item.split('\n') for item in body_list.split('\n\n')]
 
-        yield self.db[self.collection_name].update(
+        yield self.db[self.db_name][self.collection_name].update(
             {
                 "message_id": message_id,
                 "submessage_id": submessage_id

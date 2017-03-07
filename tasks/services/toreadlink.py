@@ -22,7 +22,7 @@ class ToreadlinkService(Service):
 
         text = body_list.split('\n')
         for i, url in enumerate(text):
-            yield self.db[self.collection_name].toreadlink.update(
+            yield self.db[self.db_name][self.collection_name].update(
                 {
                     "message_id": message_id,
                     "submessage_id": submessage_id,

@@ -10,7 +10,7 @@ class Service(object):
     name = ''
     services = {}
     db_name = setting.message_collectionname
-    db = MongoDB()[db_name]
+    db = MongoDB()
     collection_name = ''
 
     def __init__(self, collection_name=None, db_name=setting.message_collectionname):

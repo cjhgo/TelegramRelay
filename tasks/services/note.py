@@ -17,7 +17,7 @@ class NoteService(Service):
         logging.debug(message_id)
         logging.debug(submessage_id)
 
-        yield self.db[self.collection_name].update(
+        yield self.db[self.db_name][self.collection_name].update(
                 {
                     "message_id": message_id
                 },
