@@ -13,6 +13,7 @@ urls = (
     # (r"/api/telegram/vocabulary$", message.MessageRequestHandler),
     # (r"/v1/telegram/getUpdate$", message.MessageRequestHandler),
     (r"/", MainHandler),
+    # (r"/v1/posttitles/", )
     (r"/v1/gettitles$", message.TitleRequestHandler),
     (r"/v1/login/$", user.UserRequestHandler),
     (r"/v1/getblogs/$", message.BlogRequestHandler),

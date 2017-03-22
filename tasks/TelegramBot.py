@@ -14,7 +14,7 @@ from common.db import MongoDB, RedisDB
 #thoung this is an unused import
 #only when you import this module does the service_register decorator will execute
 #then the services dict of Service will be populated
-import services
+#import services
 from service import Service
 
 from get_title import run as fetch_title

@@ -26,7 +26,7 @@ class NoteService(Service):
                     {
                         "message_id": message_id,
                         "type": "note",
-                        "content": body_list.split('\n'),
+                        "content": body_list,
                         "crts": datetime.datetime.utcnow()
                     }
                 },

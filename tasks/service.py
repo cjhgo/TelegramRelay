@@ -6,6 +6,7 @@ from common.db import MongoDB
 import setting
 
 
+
 class Service(object):
     name = ''
     services = {}
@@ -44,3 +45,5 @@ class Service(object):
 def register_service(cls):
     Service.register_service(cls)
     return cls
+
+import services
